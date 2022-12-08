@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {
+      background: #fbfbfb;
+    }
+    .container {
+      display: flex;
+      background: #fff;
+      max-width: 1000px;
+      height: 100vh;
+      margin: 0 auto;
+      justify-content: center;
+      align-items: center;      
+    }
+    .wrapper {
+      border: 1px solid black;
+      width: 500px;
+      height: 500px;
+      display: flex;
+      flex-flow: column nowrap;
+    }
+    .progressSegment {
+      display: flex;
+    }
+    .progress-text {
+      width: 50px;
+      display: inline-block;
+    }
+    svg rect {
+      transition: all .5s linear;
+    }
+    .progress-bar {
+      padding: 15px;
+      margin-top: auto;
+      border-top: 1px solid #efefef;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="container">
+    <div class="wrapper">
+
+      <div class="progressSegment" v-for="n in segmentsCount" :key="n">
+        <div class="progress-text">
+          {{ getSegmentProgress(n) }}
+        </div>
+        <svg viewBox="0 0 440 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect :width="getSegmentProgress(n)" height="10" fill="blue"/>
+        </svg>    
+      </div>
+
+      <div class="progress-bar">
+        <div>
+          <label for="#">Cantidad de segmentos</label>
+          <input type="number" v-model="segmentsCount">
+        </div>
+        <div>
+          {{ totalProgress }}
+          <input type="range" v-model="totalProgress" style="width: 100%;">
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script>
+  const { createApp } = Vue
+
+  createApp({
+    data() {
+      return {
+        message: 'Hello Vue!',
+        totalProgress: 35,
+        segmentsCount: 3
+      }
+    },
+    computed: {
+      segmentSize(){
+        return 100 / this.segmentsCount
+      }
+    },
+    methods:{
+      getSegmentProgress(segmentPos){
+        let segmentEnd   = segmentPos * this.segmentSize;
+        let segmentStart = segmentEnd - this.segmentSize;
+        if( this.totalProgress < segmentStart ){ return '0%' }
+        if( this.totalProgress > segmentEnd ){ return '100%' }
+
+        let offset = (this.totalProgress - segmentStart)
+        let progress = (offset / this.segmentSize) * 100;
+        return progress + '%';
+      }
+    }
+  }).mount('#app')
+</script>
+</html>
