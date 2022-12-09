@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -9,6 +10,7 @@
     body {
       background: #fbfbfb;
     }
+
     .container {
       display: flex;
       background: #fff;
@@ -16,25 +18,39 @@
       height: 100vh;
       margin: 0 auto;
       justify-content: center;
-      align-items: center;      
+      align-items: center;
     }
+
     .wrapper {
       border: 1px solid black;
       width: 500px;
       height: 500px;
       display: flex;
       flex-flow: column nowrap;
+      position: relative;
     }
+
     .progressSegment {
       display: flex;
     }
+
     .progress-text {
       width: 50px;
       display: inline-block;
     }
-    svg rect {
+
+    svg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotateZ(-90deg);
+    }
+
+    svg circle {
+      stroke-dasharray: 916.9742;
       transition: all .5s linear;
     }
+
     .progress-bar {
       padding: 15px;
       margin-top: auto;
@@ -42,29 +58,49 @@
     }
   </style>
 </head>
+
 <body>
   <div id="app" class="container">
     <div class="wrapper">
+      {{ totalSent + '/' + total }}
+      <svg width="350" height="350" viewBox="0 0 350 350" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="175" cy="175" r="170" stroke="grey" stroke-width="1" style="stroke-dashoffset: 0; stroke-dasharray: 1067.7095;"/>
+      </svg>
 
-      <div class="progressSegment" v-for="n in segmentsCount" :key="n">
-        <div class="progress-text">
-          {{ getSegmentProgress(n) }}
-        </div>
-        <svg viewBox="0 0 440 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect :width="getSegmentProgress(n)" height="10" fill="blue"/>
-        </svg>    
-      </div>
+      <svg width="350" height="350" viewBox="0 0 350 350" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle :style="{
+            'stroke-dasharray': '1067.7095',
+            'stroke-color': 'orange',
+            'stroke-dashoffset': `calc(${1067.7095} * ${ 1 - (totalSent / total)  })`
+          }" cx="175" cy="175" r="170" stroke="orange" stroke-width="8" />
+      </svg>
 
-      <div class="progress-bar">
-        <div>
-          <label for="#">Cantidad de segmentos</label>
-          <input type="number" v-model="segmentsCount">
-        </div>
-        <div>
-          {{ totalProgress }}
-          <input type="range" v-model="totalProgress" style="width: 100%;">
-        </div>
-      </div>
+      <svg v-for="(segment, i) in segments" :key="segment.value" width="300" height="300" viewBox="0 0 300 300"
+        fill="none" :style="{'z-index': 1000 + (-i)}" xmlns="http://www.w3.org/2000/svg">
+        <circle :style="{'stroke': segment.color,'stroke-dashoffset': `calc(${circleLength} * ${ 1 - segment.endsAt})`}"
+          cx="150" cy="150" r="146" :stroke="segment.color" stroke-width="8" />
+      </svg>
+    </div>
+
+    <div class="form">
+      <table>
+        <tr>
+          <td>
+            <label for="">Total</label>
+          </td>
+          <td>
+            <input type="number" v-model="total" @change="setWidth">
+          </td>
+        </tr>
+        <tr v-for="(segment, i) in segments">
+          <td>
+            <label for="">{{ segment.label }}</label>
+          </td>
+          <td>
+            <input type="number" v-model="segments[i].value" @change="setWidth">
+          </td>
+        </tr>
+      </table>
     </div>
   </div>
 </body>
@@ -77,27 +113,53 @@
     data() {
       return {
         message: 'Hello Vue!',
-        totalProgress: 35,
-        segmentsCount: 3
+        total: 100,
+        circleLength: 916.9742,
+        segments: [
+          {
+            label: 'Leídos',
+            value: 25,
+            startsAt: null,
+            endsAt: null,
+            color: '#412faf'
+          },
+          {
+            label: 'No leídos',
+            value: 15,
+            startsAt: null,
+            endsAt: null,
+            color: '#fb6a00'
+          },
+          {
+            label: 'Rechazados',
+            value: 10,
+            startsAt: null,
+            endsAt: null,
+            color: '#99a1db'
+          },
+        ]
       }
     },
     computed: {
-      segmentSize(){
-        return 100 / this.segmentsCount
+      totalSent(){
+        return this.segments.reduce((prev,current,i)=>{
+          return prev + current.value
+        },0)
       }
     },
-    methods:{
-      getSegmentProgress(segmentPos){
-        let segmentEnd   = segmentPos * this.segmentSize;
-        let segmentStart = segmentEnd - this.segmentSize;
-        if( this.totalProgress < segmentStart ){ return '0%' }
-        if( this.totalProgress > segmentEnd ){ return '100%' }
-
-        let offset = (this.totalProgress - segmentStart)
-        let progress = (offset / this.segmentSize) * 100;
-        return progress + '%';
+    methods: {
+      setWidth() {
+        this.segments.forEach((segment, i) => {
+          segment.startsAt = (i != 0) ? this.segments[i - 1].endsAt : 0
+          segment.endsAt = (segment.value / this.total) + segment.startsAt
+        })
       }
+    },
+    mounted() {
+      console.log('Works')
+      this.setWidth()
     }
   }).mount('#app')
 </script>
+
 </html>
